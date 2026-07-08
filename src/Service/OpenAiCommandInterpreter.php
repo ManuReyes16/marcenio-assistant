@@ -18,7 +18,7 @@ class OpenAiCommandInterpreter
         $normalizedText = mb_strtolower($text);
 
         if (str_starts_with($text, '/')) {
-            return $text;
+            return $this->validateCommand($text);
         }
 
         // Prueba directa para confirmar que este archivo se está usando.
@@ -87,6 +87,25 @@ elimina la nota 2 => /borrar-nota 2",
 
         $data = $response->toArray(false);
 
-        return trim($data['output'][0]['content'][0]['text'] ?? '/ayuda');
+        return $this->validateCommand((string) ($data['output'][0]['content'][0]['text'] ?? '/ayuda'));
+    }
+
+    private function validateCommand(string $command): string
+    {
+        $command = trim($command);
+
+        if (in_array($command, ['/tareas', '/notas', '/ayuda'], true)) {
+            return $command;
+        }
+
+        if (preg_match('/^\/(?:hecha|borrar-tarea|borrar-nota)\s+[1-9]\d*$/', $command) === 1) {
+            return $command;
+        }
+
+        if (preg_match('/^\/(?:tarea|nota)\s+(.+)$/u', $command, $matches) === 1 && trim($matches[1]) !== '') {
+            return $command;
+        }
+
+        return '/ayuda';
     }
 }
