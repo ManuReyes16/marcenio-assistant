@@ -17,6 +17,9 @@ class Note
     #[ORM\Column(type: Types::TEXT)]
     private ?string $content = null;
 
+    #[ORM\Column(length: 64)]
+    private ?string $telegramChatId = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -30,6 +33,18 @@ class Note
     public function setContent(string $content): static
     {
         $this->content = $content;
+
+        return $this;
+    }
+
+    public function getTelegramChatId(): ?string
+    {
+        return $this->telegramChatId;
+    }
+
+    public function setTelegramChatId(string $telegramChatId): static
+    {
+        $this->telegramChatId = $telegramChatId;
 
         return $this;
     }

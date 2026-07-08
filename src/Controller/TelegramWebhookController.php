@@ -100,7 +100,7 @@ class TelegramWebhookController extends AbstractController
             }
         }
 
-        $reply = $botCommandHandler->handle($interpretedText);
+        $reply = $botCommandHandler->handle((string) $chatId, $interpretedText);
 
         $telegramService->sendMessage($chatId, $reply);
 

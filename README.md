@@ -14,6 +14,7 @@ El proyecto está en una fase sencilla y directa: recibe actualizaciones de Tele
 - Guardar notas con `/nota idea para el proyecto`.
 - Listar notas con `/notas`.
 - Borrar notas con `/borrar-nota 1`.
+- Separar tareas y notas por `chat.id` de Telegram.
 - Interpretar frases naturales simples con reglas locales, por ejemplo `acuérdate de comprar café`.
 - Usar OpenAI como intérprete de respaldo para convertir lenguaje natural en comandos internos.
 - Enviar mensajes de prueba y consultar actualizaciones de Telegram desde rutas auxiliares.
@@ -39,7 +40,7 @@ Responsabilidades actuales:
 - Ejecutar el comando especial `/debug-ia`.
 - Pasar el texto primero por `AiCommandInterpreter`.
 - Usar `OpenAiCommandInterpreter` como respaldo si el intérprete local no transforma el mensaje.
-- Enviar el comando interpretado a `BotCommandHandler`.
+- Enviar el comando interpretado y el `chat.id` a `BotCommandHandler`.
 - Enviar la respuesta final por Telegram usando `TelegramService`.
 
 ### BotCommandHandler
@@ -99,14 +100,16 @@ Métodos actuales:
 
 - `id`
 - `title`
+- `telegramChatId`
 - `isDone`
 
 `src/Entity/Note.php` representa una nota:
 
 - `id`
 - `content`
+- `telegramChatId`
 
-Por ahora las tareas y notas no están asociadas a un usuario o chat concreto. Si varias personas usan el mismo bot, compartirían la misma lista global.
+Las tareas y notas se asocian al `chat.id` de Telegram. Cada chat solo lista, completa o borra sus propios registros.
 
 ## Requisitos
 
@@ -302,9 +305,9 @@ git diff
 
 ## Pruebas
 
-El proyecto contiene la configuración inicial de PHPUnit, pero actualmente no hay tests de aplicación definidos.
+El proyecto contiene tests de PHPUnit para los intérpretes y servicios principales.
 
-Para ejecutar la suite cuando existan tests:
+Para ejecutar la suite:
 
 ```bash
 php bin/phpunit
@@ -314,6 +317,5 @@ php bin/phpunit
 
 - El controlador del webhook concentra bastante orquestación. Una mejora segura sería mover el procesamiento de updates a un servicio de aplicación.
 - `BotCommandHandler` mezcla parsing, persistencia y formato de respuestas. Puede separarse gradualmente en servicios de tareas, notas y formateadores.
-- Las entidades `Task` y `Note` no tienen todavía relación con un chat o usuario de Telegram.
 - Las respuestas de OpenAI deberían validarse de forma estricta antes de ejecutarse como comandos internos.
 - Para producción, conviene revisar la configuración HTTP y TLS de las llamadas externas.

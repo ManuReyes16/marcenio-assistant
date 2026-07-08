@@ -17,15 +17,19 @@ class NoteService
     /**
      * @return Note[]
      */
-    public function findAll(): array
+    public function findAll(string $telegramChatId): array
     {
-        return $this->noteRepository->findAll();
+        return $this->noteRepository->findBy(
+            ['telegramChatId' => $telegramChatId],
+            ['id' => 'ASC']
+        );
     }
 
-    public function create(string $content): Note
+    public function create(string $telegramChatId, string $content): Note
     {
         $note = new Note();
         $note->setContent($content);
+        $note->setTelegramChatId($telegramChatId);
 
         $this->entityManager->persist($note);
         $this->entityManager->flush();
@@ -33,9 +37,12 @@ class NoteService
         return $note;
     }
 
-    public function delete(int $id): ?Note
+    public function delete(string $telegramChatId, int $id): ?Note
     {
-        $note = $this->noteRepository->find($id);
+        $note = $this->noteRepository->findOneBy([
+            'id' => $id,
+            'telegramChatId' => $telegramChatId,
+        ]);
 
         if (!$note instanceof Note) {
             return null;

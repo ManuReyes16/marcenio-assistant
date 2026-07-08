@@ -10,7 +10,7 @@ class BotCommandHandler
     ) {
     }
 
-    public function handle(string $text): string
+    public function handle(string $telegramChatId, string $text): string
     {
         if ($text === '/start' || $text === '/ayuda') {
             return "Hola, soy Marcenio Assistant 🤖\n\n"
@@ -26,7 +26,7 @@ class BotCommandHandler
         }
 
         if ($text === '/tareas') {
-            $tasks = $this->taskService->findAll();
+            $tasks = $this->taskService->findAll($telegramChatId);
 
             if (empty($tasks)) {
                 return 'No tienes tareas guardadas todavía.';
@@ -49,7 +49,7 @@ class BotCommandHandler
                 return 'Dime el número de la tarea. Ejemplo: /hecha 1';
             }
 
-            $task = $this->taskService->markDone((int) $taskId);
+            $task = $this->taskService->markDone($telegramChatId, (int) $taskId);
 
             if (!$task) {
                 return 'No he encontrado ninguna tarea con el ID ' . $taskId;
@@ -69,7 +69,7 @@ class BotCommandHandler
                 return 'Dime el número de la tarea que quieres borrar. Ejemplo: /borrar-tarea 1';
             }
 
-            $task = $this->taskService->delete((int) $taskId);
+            $task = $this->taskService->delete($telegramChatId, (int) $taskId);
 
             if (!$task) {
                 return 'No he encontrado ninguna tarea con el ID ' . $taskId;
@@ -83,7 +83,7 @@ class BotCommandHandler
         }
 
         if ($text === '/notas') {
-            $notes = $this->noteService->findAll();
+            $notes = $this->noteService->findAll($telegramChatId);
 
             if (empty($notes)) {
                 return 'No tienes notas guardadas todavía.';
@@ -105,7 +105,7 @@ class BotCommandHandler
                 return 'Dime el número de la nota que quieres borrar. Ejemplo: /borrar-nota 1';
             }
 
-            $note = $this->noteService->delete((int) $noteId);
+            $note = $this->noteService->delete($telegramChatId, (int) $noteId);
 
             if (!$note) {
                 return 'No he encontrado ninguna nota con el ID ' . $noteId;
@@ -125,7 +125,7 @@ class BotCommandHandler
                 return 'Dime qué tarea quieres guardar. Ejemplo: /tarea comprar pan';
             }
 
-            $this->taskService->create($taskTitle);
+            $this->taskService->create($telegramChatId, $taskTitle);
 
             return 'Tarea guardada en la base de datos: ' . $taskTitle;
         }
@@ -141,7 +141,7 @@ class BotCommandHandler
                 return 'Dime qué nota quieres guardar. Ejemplo: /nota idea para el proyecto';
             }
 
-            $this->noteService->create($noteContent);
+            $this->noteService->create($telegramChatId, $noteContent);
 
             return 'Nota guardada en la base de datos: ' . $noteContent;
         }

@@ -51,7 +51,7 @@ class TelegramCheckController extends AbstractController
             if ($text === '') {
                 $reply = 'De momento solo entiendo mensajes de texto.';
             } else {
-                $reply = $botCommandHandler->handle($text);
+                $reply = $botCommandHandler->handle((string) $chatId, $text);
             }
 
             $telegramService->sendMessage($chatId, $reply);

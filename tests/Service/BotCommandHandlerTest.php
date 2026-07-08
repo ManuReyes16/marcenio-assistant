@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 
 class BotCommandHandlerTest extends TestCase
 {
+    private const TELEGRAM_CHAT_ID = '123456';
+
     public function testItShowsHelp(): void
     {
         $handler = $this->createHandler();
@@ -27,7 +29,7 @@ class BotCommandHandlerTest extends TestCase
                 . "/nota idea para el proyecto - Guardar una nota\n"
                 . "/notas - Ver notas guardadas\n"
                 . "/borrar-nota 1 - Borrar una nota",
-            $handler->handle('/ayuda')
+            $handler->handle(self::TELEGRAM_CHAT_ID, '/ayuda')
         );
     }
 
@@ -37,6 +39,7 @@ class BotCommandHandlerTest extends TestCase
         $taskService
             ->expects(self::once())
             ->method('findAll')
+            ->with(self::TELEGRAM_CHAT_ID)
             ->willReturn([
                 $this->createTask(1, 'comprar pan', false),
                 $this->createTask(2, 'llamar al dentista', true),
@@ -48,7 +51,7 @@ class BotCommandHandlerTest extends TestCase
             "Tareas guardadas:\n\n"
                 . "1 - comprar pan\n"
                 . "2 - llamar al dentista ✅\n",
-            $handler->handle('/tareas')
+            $handler->handle(self::TELEGRAM_CHAT_ID, '/tareas')
         );
     }
 
@@ -58,11 +61,12 @@ class BotCommandHandlerTest extends TestCase
         $taskService
             ->expects(self::once())
             ->method('findAll')
+            ->with(self::TELEGRAM_CHAT_ID)
             ->willReturn([]);
 
         $handler = $this->createHandler($taskService);
 
-        self::assertSame('No tienes tareas guardadas todavía.', $handler->handle('/tareas'));
+        self::assertSame('No tienes tareas guardadas todavía.', $handler->handle(self::TELEGRAM_CHAT_ID, '/tareas'));
     }
 
     #[DataProvider('taskDoneProvider')]
@@ -72,12 +76,12 @@ class BotCommandHandlerTest extends TestCase
         $taskService
             ->expects(self::once())
             ->method('markDone')
-            ->with(7)
+            ->with(self::TELEGRAM_CHAT_ID, 7)
             ->willReturn($task);
 
         $handler = $this->createHandler($taskService);
 
-        self::assertSame($expectedReply, $handler->handle($command));
+        self::assertSame($expectedReply, $handler->handle(self::TELEGRAM_CHAT_ID, $command));
     }
 
     /**
@@ -109,7 +113,7 @@ class BotCommandHandlerTest extends TestCase
 
         $handler = $this->createHandler($taskService, $noteService);
 
-        self::assertSame($expectedReply, $handler->handle($command));
+        self::assertSame($expectedReply, $handler->handle(self::TELEGRAM_CHAT_ID, $command));
     }
 
     /**
@@ -140,12 +144,12 @@ class BotCommandHandlerTest extends TestCase
         $taskService
             ->expects(self::once())
             ->method('delete')
-            ->with(3)
+            ->with(self::TELEGRAM_CHAT_ID, 3)
             ->willReturn($this->createTask(3, 'comprar café', false));
 
         $handler = $this->createHandler($taskService);
 
-        self::assertSame('Tarea borrada: comprar café', $handler->handle('/borrar-tarea 3'));
+        self::assertSame('Tarea borrada: comprar café', $handler->handle(self::TELEGRAM_CHAT_ID, '/borrar-tarea 3'));
     }
 
     public function testItCreatesATask(): void
@@ -154,12 +158,12 @@ class BotCommandHandlerTest extends TestCase
         $taskService
             ->expects(self::once())
             ->method('create')
-            ->with('comprar pan')
+            ->with(self::TELEGRAM_CHAT_ID, 'comprar pan')
             ->willReturn($this->createTask(null, 'comprar pan', false));
 
         $handler = $this->createHandler($taskService);
 
-        self::assertSame('Tarea guardada en la base de datos: comprar pan', $handler->handle('/tarea comprar pan'));
+        self::assertSame('Tarea guardada en la base de datos: comprar pan', $handler->handle(self::TELEGRAM_CHAT_ID, '/tarea comprar pan'));
     }
 
     public function testItListsNotes(): void
@@ -168,6 +172,7 @@ class BotCommandHandlerTest extends TestCase
         $noteService
             ->expects(self::once())
             ->method('findAll')
+            ->with(self::TELEGRAM_CHAT_ID)
             ->willReturn([
                 $this->createNote(1, 'idea para el proyecto'),
                 $this->createNote(2, 'llamar a Ana'),
@@ -179,7 +184,7 @@ class BotCommandHandlerTest extends TestCase
             "Notas guardadas:\n\n"
                 . "1 - idea para el proyecto\n"
                 . "2 - llamar a Ana\n",
-            $handler->handle('/notas')
+            $handler->handle(self::TELEGRAM_CHAT_ID, '/notas')
         );
     }
 
@@ -189,11 +194,12 @@ class BotCommandHandlerTest extends TestCase
         $noteService
             ->expects(self::once())
             ->method('findAll')
+            ->with(self::TELEGRAM_CHAT_ID)
             ->willReturn([]);
 
         $handler = $this->createHandler(noteService: $noteService);
 
-        self::assertSame('No tienes notas guardadas todavía.', $handler->handle('/notas'));
+        self::assertSame('No tienes notas guardadas todavía.', $handler->handle(self::TELEGRAM_CHAT_ID, '/notas'));
     }
 
     public function testItDeletesANote(): void
@@ -202,12 +208,12 @@ class BotCommandHandlerTest extends TestCase
         $noteService
             ->expects(self::once())
             ->method('delete')
-            ->with(4)
+            ->with(self::TELEGRAM_CHAT_ID, 4)
             ->willReturn($this->createNote(4, 'idea para el proyecto'));
 
         $handler = $this->createHandler(noteService: $noteService);
 
-        self::assertSame('Nota borrada: idea para el proyecto', $handler->handle('/borrar-nota 4'));
+        self::assertSame('Nota borrada: idea para el proyecto', $handler->handle(self::TELEGRAM_CHAT_ID, '/borrar-nota 4'));
     }
 
     public function testItCreatesANote(): void
@@ -216,12 +222,12 @@ class BotCommandHandlerTest extends TestCase
         $noteService
             ->expects(self::once())
             ->method('create')
-            ->with('idea para el proyecto')
+            ->with(self::TELEGRAM_CHAT_ID, 'idea para el proyecto')
             ->willReturn($this->createNote(null, 'idea para el proyecto'));
 
         $handler = $this->createHandler(noteService: $noteService);
 
-        self::assertSame('Nota guardada en la base de datos: idea para el proyecto', $handler->handle('/nota idea para el proyecto'));
+        self::assertSame('Nota guardada en la base de datos: idea para el proyecto', $handler->handle(self::TELEGRAM_CHAT_ID, '/nota idea para el proyecto'));
     }
 
     private function createHandler(?TaskService $taskService = null, ?NoteService $noteService = null): BotCommandHandler

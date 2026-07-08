@@ -16,6 +16,9 @@ class Task
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
+    #[ORM\Column(length: 64)]
+    private ?string $telegramChatId = null;
+
     #[ORM\Column]
     private ?bool $isDone = null;
 
@@ -32,6 +35,18 @@ class Task
     public function setTitle(string $title): static
     {
         $this->title = $title;
+
+        return $this;
+    }
+
+    public function getTelegramChatId(): ?string
+    {
+        return $this->telegramChatId;
+    }
+
+    public function setTelegramChatId(string $telegramChatId): static
+    {
+        $this->telegramChatId = $telegramChatId;
 
         return $this;
     }

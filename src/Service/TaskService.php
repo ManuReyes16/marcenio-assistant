@@ -17,15 +17,19 @@ class TaskService
     /**
      * @return Task[]
      */
-    public function findAll(): array
+    public function findAll(string $telegramChatId): array
     {
-        return $this->taskRepository->findAll();
+        return $this->taskRepository->findBy(
+            ['telegramChatId' => $telegramChatId],
+            ['id' => 'ASC']
+        );
     }
 
-    public function create(string $title): Task
+    public function create(string $telegramChatId, string $title): Task
     {
         $task = new Task();
         $task->setTitle($title);
+        $task->setTelegramChatId($telegramChatId);
         $task->setIsDone(false);
 
         $this->entityManager->persist($task);
@@ -34,9 +38,12 @@ class TaskService
         return $task;
     }
 
-    public function markDone(int $id): ?Task
+    public function markDone(string $telegramChatId, int $id): ?Task
     {
-        $task = $this->taskRepository->find($id);
+        $task = $this->taskRepository->findOneBy([
+            'id' => $id,
+            'telegramChatId' => $telegramChatId,
+        ]);
 
         if (!$task instanceof Task) {
             return null;
@@ -48,9 +55,12 @@ class TaskService
         return $task;
     }
 
-    public function delete(int $id): ?Task
+    public function delete(string $telegramChatId, int $id): ?Task
     {
-        $task = $this->taskRepository->find($id);
+        $task = $this->taskRepository->findOneBy([
+            'id' => $id,
+            'telegramChatId' => $telegramChatId,
+        ]);
 
         if (!$task instanceof Task) {
             return null;
