@@ -2,14 +2,11 @@
 
 namespace App\Service;
 
-use App\Entity\Note;
-use App\Entity\Task;
-use Doctrine\ORM\EntityManagerInterface;
-
 class BotCommandHandler
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private TaskService $taskService,
+        private NoteService $noteService
     ) {
     }
 
@@ -29,7 +26,7 @@ class BotCommandHandler
         }
 
         if ($text === '/tareas') {
-            $tasks = $this->entityManager->getRepository(Task::class)->findAll();
+            $tasks = $this->taskService->findAll();
 
             if (empty($tasks)) {
                 return 'No tienes tareas guardadas todavía.';
@@ -52,14 +49,11 @@ class BotCommandHandler
                 return 'Dime el número de la tarea. Ejemplo: /hecha 1';
             }
 
-            $task = $this->entityManager->getRepository(Task::class)->find((int) $taskId);
+            $task = $this->taskService->markDone((int) $taskId);
 
             if (!$task) {
                 return 'No he encontrado ninguna tarea con el ID ' . $taskId;
             }
-
-            $task->setIsDone(true);
-            $this->entityManager->flush();
 
             return 'Tarea marcada como hecha: ' . $task->getTitle();
         }
@@ -75,18 +69,13 @@ class BotCommandHandler
                 return 'Dime el número de la tarea que quieres borrar. Ejemplo: /borrar-tarea 1';
             }
 
-            $task = $this->entityManager->getRepository(Task::class)->find((int) $taskId);
+            $task = $this->taskService->delete((int) $taskId);
 
             if (!$task) {
                 return 'No he encontrado ninguna tarea con el ID ' . $taskId;
             }
 
-            $taskTitle = $task->getTitle();
-
-            $this->entityManager->remove($task);
-            $this->entityManager->flush();
-
-            return 'Tarea borrada: ' . $taskTitle;
+            return 'Tarea borrada: ' . $task->getTitle();
         }
 
         if ($text === '/borrar-tarea') {
@@ -94,7 +83,7 @@ class BotCommandHandler
         }
 
         if ($text === '/notas') {
-            $notes = $this->entityManager->getRepository(Note::class)->findAll();
+            $notes = $this->noteService->findAll();
 
             if (empty($notes)) {
                 return 'No tienes notas guardadas todavía.';
@@ -116,18 +105,13 @@ class BotCommandHandler
                 return 'Dime el número de la nota que quieres borrar. Ejemplo: /borrar-nota 1';
             }
 
-            $note = $this->entityManager->getRepository(Note::class)->find((int) $noteId);
+            $note = $this->noteService->delete((int) $noteId);
 
             if (!$note) {
                 return 'No he encontrado ninguna nota con el ID ' . $noteId;
             }
 
-            $noteContent = $note->getContent();
-
-            $this->entityManager->remove($note);
-            $this->entityManager->flush();
-
-            return 'Nota borrada: ' . $noteContent;
+            return 'Nota borrada: ' . $note->getContent();
         }
 
         if ($text === '/borrar-nota') {
@@ -141,12 +125,7 @@ class BotCommandHandler
                 return 'Dime qué tarea quieres guardar. Ejemplo: /tarea comprar pan';
             }
 
-            $task = new Task();
-            $task->setTitle($taskTitle);
-            $task->setIsDone(false);
-
-            $this->entityManager->persist($task);
-            $this->entityManager->flush();
+            $this->taskService->create($taskTitle);
 
             return 'Tarea guardada en la base de datos: ' . $taskTitle;
         }
@@ -162,11 +141,7 @@ class BotCommandHandler
                 return 'Dime qué nota quieres guardar. Ejemplo: /nota idea para el proyecto';
             }
 
-            $note = new Note();
-            $note->setContent($noteContent);
-
-            $this->entityManager->persist($note);
-            $this->entityManager->flush();
+            $this->noteService->create($noteContent);
 
             return 'Nota guardada en la base de datos: ' . $noteContent;
         }
