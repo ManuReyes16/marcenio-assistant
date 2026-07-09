@@ -83,6 +83,19 @@ class OpenAiCommandInterpreterTest extends TestCase
         self::assertSame(0, $httpClient->getRequestsCount());
     }
 
+    public function testItReturnsMultipleValidatedCommands(): void
+    {
+        $interpreter = new OpenAiCommandInterpreter(
+            new MockHttpClient($this->createOpenAiResponse("/tarea comprar pan\n/recordatorio inválido\n/nota idea")),
+            'test-key'
+        );
+
+        self::assertSame(
+            ['/tarea comprar pan', '/nota idea'],
+            $interpreter->interpretMany('mensaje natural con varias instrucciones')
+        );
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */

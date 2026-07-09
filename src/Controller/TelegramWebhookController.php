@@ -2,8 +2,7 @@
 
 namespace App\Controller;
 
-use App\Service\AiCommandInterpreter;
-use App\Service\BotCommandHandler;
+use App\Service\MultipleCommandHandler;
 use App\Service\OpenAiCommandInterpreter;
 use App\Service\TelegramService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,8 +16,7 @@ class TelegramWebhookController extends AbstractController
     public function webhook(
         Request $request,
         TelegramService $telegramService,
-        BotCommandHandler $botCommandHandler,
-        AiCommandInterpreter $aiCommandInterpreter,
+        MultipleCommandHandler $multipleCommandHandler,
         OpenAiCommandInterpreter $openAiCommandInterpreter
     ): JsonResponse {
         $content = $request->getContent();
@@ -90,24 +88,13 @@ class TelegramWebhookController extends AbstractController
             return new JsonResponse(['status' => 'ok']);
         }
 
-        $interpretedText = $aiCommandInterpreter->interpret($text);
-
-        if ($interpretedText === $text && !str_starts_with($text, '/')) {
-            try {
-                $interpretedText = $openAiCommandInterpreter->interpret($text);
-            } catch (\Throwable $exception) {
-                $interpretedText = $text;
-            }
-        }
-
-        $reply = $botCommandHandler->handle((string) $chatId, $interpretedText);
+        $reply = $multipleCommandHandler->handle((string) $chatId, $text);
 
         $telegramService->sendMessage($chatId, $reply);
 
         return new JsonResponse([
             'status' => 'ok',
             'original_text' => $text,
-            'interpreted_text' => $interpretedText,
         ]);
     }
 }

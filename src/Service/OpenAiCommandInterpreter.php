@@ -8,26 +8,37 @@ class OpenAiCommandInterpreter
 {
     public function __construct(
         private HttpClientInterface $httpClient,
-        private string $openaiApiKey
+        private string $openaiApiKey,
+        private ?InternalCommandValidator $internalCommandValidator = null
     ) {
+        $this->internalCommandValidator ??= new InternalCommandValidator();
     }
 
     public function interpret(string $text): string
+    {
+        return $this->internalCommandValidator->validateOrHelp($this->interpretMany($text)[0] ?? '/ayuda');
+    }
+
+    /**
+     * @return string[]
+     */
+    public function interpretMany(string $text): array
     {
         $text = trim($text);
         $normalizedText = mb_strtolower($text);
 
         if (str_starts_with($text, '/')) {
-            return $this->validateCommand($text);
+            $command = $this->internalCommandValidator->validate($text);
+            return $command === null ? [] : [$command];
         }
 
-        // Prueba directa para confirmar que este archivo se está usando.
         if (
             str_starts_with($normalizedText, 'acuérdate de ') ||
             str_starts_with($normalizedText, 'acuerdate de ')
         ) {
             $task = preg_replace('/^acuérdate de |^acuerdate de /iu', '', $text);
-            return '/tarea ' . trim($task);
+            $command = $this->internalCommandValidator->validate('/tarea ' . trim((string) $task));
+            return $command === null ? [] : [$command];
         }
 
         if (
@@ -35,7 +46,8 @@ class OpenAiCommandInterpreter
             str_starts_with($normalizedText, 'recuerdame ')
         ) {
             $task = preg_replace('/^recuérdame |^recuerdame /iu', '', $text);
-            return '/tarea ' . trim($task);
+            $command = $this->internalCommandValidator->validate('/tarea ' . trim((string) $task));
+            return $command === null ? [] : [$command];
         }
 
         $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/responses', [
@@ -50,7 +62,7 @@ class OpenAiCommandInterpreter
                 'temperature' => 0,
                 'instructions' => "Eres un convertidor de mensajes naturales a comandos internos para un bot llamado Marcenio Assistant.
 
-Devuelve SOLO uno de estos comandos:
+Devuelve SOLO uno o más de estos comandos internos, uno por línea:
 
 /tarea texto de la tarea
 /tareas
@@ -70,6 +82,8 @@ Reglas:
 - Si quiere borrar una tarea y da un número, devuelve /borrar-tarea ID.
 - Si quiere borrar una nota y da un número, devuelve /borrar-nota ID.
 - Solo devuelve /ayuda si no hay ninguna intención clara.
+- Si hay varias instrucciones en el mensaje, devuelve un comando por cada instrucción, en el mismo orden.
+- No añadas explicaciones, numeración, viñetas ni texto fuera de los comandos.
 
 Ejemplos:
 acuérdate de comprar café mañana => /tarea comprar café mañana
@@ -86,26 +100,16 @@ elimina la nota 2 => /borrar-nota 2",
         ]);
 
         $data = $response->toArray(false);
+        $commands = [];
 
-        return $this->validateCommand((string) ($data['output'][0]['content'][0]['text'] ?? '/ayuda'));
-    }
+        foreach (preg_split('/\R/u', (string) ($data['output'][0]['content'][0]['text'] ?? '/ayuda')) ?: [] as $command) {
+            $validatedCommand = $this->internalCommandValidator->validate($command);
 
-    private function validateCommand(string $command): string
-    {
-        $command = trim($command);
-
-        if (in_array($command, ['/tareas', '/notas', '/ayuda'], true)) {
-            return $command;
+            if ($validatedCommand !== null) {
+                $commands[] = $validatedCommand;
+            }
         }
 
-        if (preg_match('/^\/(?:hecha|borrar-tarea|borrar-nota)\s+[1-9]\d*$/', $command) === 1) {
-            return $command;
-        }
-
-        if (preg_match('/^\/(?:tarea|nota)\s+(.+)$/u', $command, $matches) === 1 && trim($matches[1]) !== '') {
-            return $command;
-        }
-
-        return '/ayuda';
+        return $commands;
     }
 }
