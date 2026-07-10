@@ -23,8 +23,13 @@ services:
     App\Service\TelegramService:
         arguments:
             $telegramBotToken: '%env(TELEGRAM_BOT_TOKEN)%'
+            $projectDir: '%kernel.project_dir%'
     App\Service\OpenAiCommandInterpreter:
+        arguments:
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+    App\Service\AudioTranscriptionService:
         arguments:
             $openaiApiKey: '%env(OPENAI_API_KEY)%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+

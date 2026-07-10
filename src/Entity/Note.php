@@ -7,6 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: NoteRepository::class)]
+#[ORM\Index(name: 'IDX_NOTE_TELEGRAM_CHAT_ID', columns: ['telegram_chat_id'])]
 class Note
 {
     #[ORM\Id]
@@ -49,3 +50,5 @@ class Note
         return $this;
     }
 }
+
+

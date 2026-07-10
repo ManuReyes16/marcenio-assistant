@@ -6,6 +6,7 @@ use App\Repository\TaskRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
+#[ORM\Index(name: 'IDX_TASK_TELEGRAM_CHAT_ID', columns: ['telegram_chat_id'])]
 class Task
 {
     #[ORM\Id]
@@ -63,3 +64,5 @@ class Task
         return $this;
     }
 }
+
+
